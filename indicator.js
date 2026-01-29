@@ -30,20 +30,25 @@ let flyBySelf = false;
 ctx.translate(w/2, h/2);
 compassCtx.translate(w/2, h/2);
 
-ctx.font = "OCR A Extended 16px";
+ctx.font = "10px OCR";
 ctx.fillStyle = config.strokeStyle;
 
-compassCtx.font = "OCR A Extended 16px";
+compassCtx.font = "20px Consolas";
 compassCtx.fillStyle = config.strokeStyle;
 compassCtx.strokeStyle = config.strokeStyle;
 compassCtx.textAlign = "center";
 compassCtx.textBaseline = "middle";
 
+function drawAll(roll, pitch, yaw) {
+    draw(roll, pitch);
+    drawCompass(yaw);
+}
+
 function draw(roll, pitch) {
     clearCtx();
     drawPitch(pitch);
     drawRollLine(roll);
-    ctx.fillRect(-350,0,700,1);
+    // ctx.fillRect(-350,0,700,1);
 } 
 
 function clearCtx() {
@@ -129,7 +134,7 @@ function drawCompass(yaw) {
 
     // Draw Yaw text (fixed at top center)
     compassCtx.fillStyle = config.strokeStyle;
-    compassCtx.fillText(yaw, 0, -300);
+    compassCtx.fillText(yaw, 0, -270);
 
     // Rotate to current Yaw (negative because compass card moves opposite to turn)
     compassCtx.rotate(Math.PI * (-yaw)/180);
@@ -163,7 +168,7 @@ function drawCompass(yaw) {
             compassCtx.stroke();
             
             // Label
-            compassCtx.translate(r - tickLenLong - 20, 0); 
+            compassCtx.translate(r - tickLenLong - 35, 0); 
             // Rotate text to be tangent to the circle (readable when at top)
             compassCtx.rotate(Math.PI / 2);
             
@@ -246,8 +251,7 @@ document.addEventListener('keydown', handleKeyDown);
 
 // Draw overlay reference lines
 const overlayCanvas = document.getElementById('overlay');
-draw(0, 0); 
-drawCompass(0);
+drawAll(0, 0, 0);
 
 const overlayCtx = overlayCanvas.getContext('2d');
 const overlayW = overlayCanvas.width;
@@ -259,12 +263,17 @@ overlayCtx.lineWidth = 2;
 // Draw center crosshair
 overlayCtx.beginPath();
 
+const lineLength = 200;
+const halfLen = lineLength / 2;
+const centerX = overlayW / 2;
+const centerY = overlayH / 2;
+
 // Horizontal line
-overlayCtx.moveTo(0, overlayH / 2);
-overlayCtx.lineTo(overlayW, overlayH / 2);
+overlayCtx.moveTo(centerX - halfLen, centerY);
+overlayCtx.lineTo(centerX + halfLen, centerY);
 
 // Vertical line
-overlayCtx.moveTo(overlayW / 2, 0);
-overlayCtx.lineTo(overlayW / 2, overlayH);
+overlayCtx.moveTo(centerX, centerY - halfLen);
+overlayCtx.lineTo(centerX, centerY + halfLen);
 
 overlayCtx.stroke();
