@@ -2,11 +2,15 @@
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext(`2d`);
 
+const compassCanvas = document.getElementById('compass');
+const compassCtx = compassCanvas.getContext('2d');
+
 let w = canvas.width;
 let h = canvas.height;
 
 let currentPitch = 0;
 let currentRoll = 0;
+let currentYaw = 0;
 
 let config = {
     lineWidth: 3,
@@ -24,9 +28,16 @@ let config = {
 let flyBySelf = false;
 
 ctx.translate(w/2, h/2);
+compassCtx.translate(w/2, h/2);
 
 ctx.font = "OCR A Extended 16px";
 ctx.fillStyle = config.strokeStyle;
+
+compassCtx.font = "OCR A Extended 16px";
+compassCtx.fillStyle = config.strokeStyle;
+compassCtx.strokeStyle = config.strokeStyle;
+compassCtx.textAlign = "center";
+compassCtx.textBaseline = "middle";
 
 function draw(roll, pitch) {
     clearCtx();
@@ -109,7 +120,71 @@ function drawRollLine(roll) {
     ctx.lineTo(config.rollScaleWidth + config.tailSize, 0);
     ctx.stroke();
     ctx.closePath();
-    // ctx.fillRect(0,350,701,350);s
+}
+
+function drawCompass(yaw) {
+    // Reset previous rotation
+    compassCtx.rotate(Math.PI * (currentYaw)/180);
+    compassCtx.clearRect(-w/2, -h/2, w, h);
+
+    // Draw Yaw text (fixed at top center)
+    compassCtx.fillStyle = config.strokeStyle;
+    compassCtx.fillText(yaw, 0, -300);
+
+    // Rotate to current Yaw (negative because compass card moves opposite to turn)
+    compassCtx.rotate(Math.PI * (-yaw)/180);
+    
+    // Config values
+    const r = 250;
+    const tickLenShort = 10;
+    const tickLenLong = 20;
+
+    compassCtx.strokeStyle = config.strokeStyle;
+    compassCtx.lineWidth = 2; // Slightly thinner for compass
+    
+    // Draw Circle
+    compassCtx.beginPath();
+    compassCtx.arc(0, 0, r, 0, Math.PI * 2);
+    compassCtx.stroke();
+
+    // Draw Ticks and Labels
+    for (let i = 0; i < 360; i += 15) {
+        compassCtx.save();
+        // Rotate to the tick position
+        // Subtract 90 degrees because 0 degrees on canvas is right (3 o'clock), 
+        // but we want 0 degrees (North) to be up (12 o'clock).
+        compassCtx.rotate((i - 90) * Math.PI / 180);
+        
+        compassCtx.beginPath();
+        if (i % 90 === 0) {
+            // Long tick
+            compassCtx.moveTo(r, 0);
+            compassCtx.lineTo(r - tickLenLong, 0);
+            compassCtx.stroke();
+            
+            // Label
+            compassCtx.translate(r - tickLenLong - 20, 0); 
+            // Rotate text to be tangent to the circle (readable when at top)
+            compassCtx.rotate(Math.PI / 2);
+            
+            let label = "";
+            if (i === 0) label = "N";
+            else if (i === 90) label = "E";
+            else if (i === 180) label = "S";
+            else if (i === 270) label = "W";
+            
+            compassCtx.fillText(label, 0, 0);
+
+        } else {
+            // Short tick
+            compassCtx.moveTo(r, 0);
+            compassCtx.lineTo(r - tickLenShort, 0);
+            compassCtx.stroke();
+        }
+        compassCtx.restore();
+    }
+
+    currentYaw = yaw;
 }
 
 function handleKeyDown(event) {
@@ -127,6 +202,16 @@ function handleKeyDown(event) {
         case 'ArrowDown':
             currentPitch = getNewPitch(false);
             draw(currentRoll, currentPitch);
+            break;
+        case 'PageUp':
+            let newYawUp = currentYaw + 1;
+            if (newYawUp >= 360) newYawUp -= 360;
+            drawCompass(newYawUp);
+            break;
+        case 'PageDown':
+            let newYawDown = currentYaw - 1;
+            if (newYawDown < 0) newYawDown += 360;
+            drawCompass(newYawDown);
             break;
         case 'KeyA':
             flyBySelf = !flyBySelf;
@@ -159,15 +244,16 @@ function tick() {
 
 document.addEventListener('keydown', handleKeyDown);
 
-draw(0, 0); 
-
 // Draw overlay reference lines
 const overlayCanvas = document.getElementById('overlay');
+draw(0, 0); 
+drawCompass(0);
+
 const overlayCtx = overlayCanvas.getContext('2d');
 const overlayW = overlayCanvas.width;
 const overlayH = overlayCanvas.height;
 
-overlayCtx.strokeStyle = "#00fffb"; // Red for high visibility
+overlayCtx.strokeStyle = "#17ff06"; // Green for high visibility
 overlayCtx.lineWidth = 2;
 
 // Draw center crosshair
