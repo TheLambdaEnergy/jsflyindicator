@@ -1,5 +1,5 @@
 
-const canvas = document.querySelector('canvas');
+const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext(`2d`);
 
 let w = canvas.width;
@@ -160,3 +160,25 @@ function tick() {
 document.addEventListener('keydown', handleKeyDown);
 
 draw(0, 0); 
+
+// Draw overlay reference lines
+const overlayCanvas = document.getElementById('overlay');
+const overlayCtx = overlayCanvas.getContext('2d');
+const overlayW = overlayCanvas.width;
+const overlayH = overlayCanvas.height;
+
+overlayCtx.strokeStyle = "#00fffb"; // Red for high visibility
+overlayCtx.lineWidth = 2;
+
+// Draw center crosshair
+overlayCtx.beginPath();
+
+// Horizontal line
+overlayCtx.moveTo(0, overlayH / 2);
+overlayCtx.lineTo(overlayW, overlayH / 2);
+
+// Vertical line
+overlayCtx.moveTo(overlayW / 2, 0);
+overlayCtx.lineTo(overlayW / 2, overlayH);
+
+overlayCtx.stroke();
